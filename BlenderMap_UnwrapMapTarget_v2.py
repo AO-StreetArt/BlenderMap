@@ -26,42 +26,6 @@ class UnwrapMapTarget(bpy.types.Operator):
     bl_label = "Unwrap Map Target"
     bl_options = {'REGISTER', 'UNDO'}
     
-    #Compare two lists of vertices
-    #return a list of differing vertices
-    #@param - a: the first vertex list being compared
-    #@param - b: the second vertex list being compared
-    #@param - option_string: 'Subtract' to subtract b from a
-    def compare_vertex_list(self, a, b, option_string):
-        print('Compare Vertex List Called')
-        print('a:')
-        for v in a:
-            print(v)
-        print('b:')
-        for v in b:
-            print(v)
-        return_list = []
-        if option_string == "Subtract":
-            for v1 in a:
-                match_flag = False
-                for v2 in b:
-                    if (v1 - v2).magnitude < 0.001:
-                        match_flag = True
-                if match_flag == False:
-                    return_list.append(v1)
-        return return_list
-        
-    #Select the specified list of vertices from the given mesh
-    def select_vertex_list(self, vert_list, mesh):
-        for v1 in mesh.verts:
-            match_flag = False
-            for v2 in vert_list:
-                if (v1.co - v2).magnitude < 0.001:
-                    match_flag = True
-            if match_flag == True:
-                v1.select = True
-            else:
-                v1.select = False
-    
     #Unwrap the mapping target mesh element
     #Each separate element in the coverage map should
     #be unwrapped whole, scaled such that the entire
@@ -74,21 +38,8 @@ class UnwrapMapTarget(bpy.types.Operator):
         self.update_aspect_ratio(projector)
         vert_list = self.find_intersecting_verts(projector, mapping_target, mesh, True)
         
-        #Select all vertices not on the edge
-        bpy.ops.mesh.select_less()
-        selected_verts=[]
-        for v in mesh.vertices:
-            if v.select:
-                selected_verts.append(v)
-#        selected_verts = [v for v in mesh.verts if v.select]
-        self.mark_edges(vert_list, selected_verts, mesh)
-        
-    def mark_edges(self, vertex_list, selected_vertices, mesh_object):
-        #Compare vert_list and selected_verts
-        #objects in vert_list and not in selected_verts are on the edge of the projection
-        edge_verts = self.compare_vertex_list(vertex_list, selected_vertices, "Subtract")
-        self.select_vertex_list(edge_verts, mesh_object)
-        
+        #Select all vertices on the edge
+        bpy.ops.mesh.region_to_loop()
         #Mark the edges for the projector
         bpy.ops.mesh.mark_seam(clear=False)
     
